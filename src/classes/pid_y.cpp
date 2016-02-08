@@ -1,8 +1,8 @@
 #include "classes/pid_y.hpp"
 using namespace robot;
 
-PID_Y::PID_Y( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, int I_min, float set_point, float power ) :
-    PID( kp, ki, kd, D, I, P_limit, I_max, I_min, set_point, power )
+PID_Y::PID_Y( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, int I_min, float set_point ) :
+    PID( kp, ki, kd, D, I, P_limit, I_max, I_min, set_point )
 {
 
 }

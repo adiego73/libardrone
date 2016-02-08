@@ -8,7 +8,7 @@ namespace robot
 class PID
 {
     public:
-        PID( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, int I_min, float set_point, float power );
+        PID( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, int I_min, float set_point );
         ~PID();
 
         virtual float update( float current_value, float change, long dt );
@@ -30,7 +30,6 @@ class PID
         float P_limit;
         float set_point;
         float error;
-        float power;
 
         float last_error;
         float last_value;

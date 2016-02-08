@@ -2,8 +2,8 @@
 
 using namespace robot;
 
-PID_RP::PID_RP( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, float set_point, float power ):
-    PID( kp, ki, kd, D, I, P_limit, I_max, 0, set_point, power )
+PID_RP::PID_RP( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, float set_point ):
+    PID( kp, ki, kd, D, I, P_limit, I_max, 0, set_point )
 {
 
 }

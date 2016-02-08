@@ -3,7 +3,7 @@
 using namespace robot;
 
 PID_Z::PID_Z( float kp, float kd, float P_limit, float set_point ) :
-    PID( kp, 0.0f, kd, 0, 0, P_limit, 0, 0, set_point, 0 )
+    PID( kp, 0.0f, kd, 0, 0, P_limit, 0, 0, set_point )
 {
 
 }

@@ -2,11 +2,11 @@
 
 using namespace robot;
 
-PID::PID( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, int I_min, float set_point, float power ) :
+PID::PID( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, int I_min, float set_point ) :
     Kp( kp ), Ki( ki ), Kd( kd ),
     Derivator( D ), Integrator( I ),
     P_limit( P_limit ), Integrator_max( I_max ), Integrator_min( I_min ),
-    set_point( set_point ), power( power )
+    set_point( set_point )
 {
     this->error = 0.0f;
     this->last_error = 0.0f;
