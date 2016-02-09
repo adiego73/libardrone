@@ -15,8 +15,8 @@ PID_Y::~PID_Y()
 void PID_Y::setPoint( float set_point )
 {
     PID::setPoint( set_point );
+    
     this->Integrators.clear();
-
     this->last_error = 0.0f;
     this->error = 0.0f;
 }

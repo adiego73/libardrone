@@ -78,8 +78,8 @@ float PID::update( float current_value, float change, long int dt )
     this->last_error = this->error;
     this->last_value = current_value;
 
-    float pid_value = this->P_value + this->I_value + this->D_value;
+    float total = this->P_value + this->I_value + this->D_value;
 
-    return pid_value;
+    return total;
 }
 
