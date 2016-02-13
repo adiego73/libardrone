@@ -5,7 +5,6 @@ project(libardrone CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")
 
 add_library(ardrone SHARED libardrone.cpp 
-                            src/message_client.cpp 
                             src/classes/robot_configuration.cpp 
                             src/classes/pid.cpp
                             src/classes/pid_rp.cpp
