@@ -62,9 +62,9 @@ float PID_RP::update( float current_value, float change, long int dt )
     float changes = 0.0f;
 
     this->error = current_value;
-    change = this->error - this->last_error;                //si es positivo me alejo, si es negativo me acerco
+    float error_difference = this->error - this->last_error;          //si es positivo me alejo, si es negativo me acerco
 
-    this->Integrators.push_back( change / dt );
+    this->Integrators.push_back( error_difference / dt );
 
     if( this->Integrators.size() > COUNT )
     {

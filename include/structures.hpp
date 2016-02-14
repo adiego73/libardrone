@@ -15,5 +15,12 @@ struct Point
     float z;
 };
 
+struct Velocity
+{
+    double x;
+    double y;
+    double z;
+};
+
 }
 #endif                                                      // STRUCTURES_HPP

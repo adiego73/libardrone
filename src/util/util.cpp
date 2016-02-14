@@ -22,36 +22,46 @@ float Util::deg_to_rad( float deg )
     return deg * M_PI / 180.0;
 }
 
-float Util::distance( Point pt, Point pt2 )
+float Util::distance( Point opoint, Point dpoint )
 {
-    pt.x -= pt2.x;
-    pt.y -= pt2.y;
-    return std::sqrt( std::abs( pt.x * pt.x + pt.y * pt.y ) );
+    Point point;
+    point.x = opoint.x - dpoint.x;
+    point.y = opoint.y - dpoint.y;
+    return std::sqrt( std::abs( point.x * point.x + point.y * point.y ) );
 }
 
-float Util::get_angle_as_deg( Point pt, Point pt2, float deg )
+float Util::get_angle_as_deg( Point opoint, Point dpoint, float deg )
 {
+    Point point;
     float angle = 0;
 
-    pt.x -= pt2.x;
-    pt.y -= pt2.y;
+    point.x = opoint.x - dpoint.x;
+    point.y = opoint.y - dpoint.y;
 
-    if( pt.x != 0 )
+    if( point.x != 0 )
     {
-        angle = std::atan( std::abs( ( float )pt.y / ( float )pt.x ) );
+        angle = std::atan( std::abs( point.y / point.x ) );
         angle = Util::rad_to_deg( angle );
 
-        if( pt.x > 0 )
+        if( point.x > 0 )
         {
-            if( pt.y < 0 )
-                angle = -( angle + 90 );
+            if( point.y < 0 )
+            {
+                angle = ( angle + 90 ) * -1;
+            }
             else
-                angle = -( 90 - angle );
+            {
+                angle = ( 90 - angle ) * -1;
+            }
         }
-        else if( pt.y < 0 )
+        else if( point.y < 0 )
+        {
             angle += 90;
+        }
         else
+        {
             angle = 90 - angle;
+        }
     }
 
     return angle;
@@ -59,10 +69,26 @@ float Util::get_angle_as_deg( Point pt, Point pt2, float deg )
 
 Point Util::get_point( int dist, float deg )
 {
-    Point pt;
+    Point point;
     float rad = Util::deg_to_rad( deg );
 
-    pt.y = dist * std::sin( rad );
-    pt.x = dist * std::cos( rad );
-    return pt;
+    point.y = dist * std::sin( rad );
+    point.x = dist * std::cos( rad );
+
+    return point;
 }
+
+float Util::normalize_angle( float angle )
+{
+    if( angle > 180 )
+    {
+        angle -= 360;
+    }
+    else if( angle < -180 )
+    {
+        angle += 360;
+    }
+
+    return angle;
+}
+
