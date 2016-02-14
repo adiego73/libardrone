@@ -40,3 +40,6 @@ target_link_libraries(ardrone ${PTHREAD_LIB}
                                  ${BOOST_SYSTEM_LIB} 
                                  ${CVDRONE_LIB} 
                              )    
+
+install(TARGETS ardrone DESTINATION /home/diego/dev/c++/tesis-ardrone/lib
+                        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)

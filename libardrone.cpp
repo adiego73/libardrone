@@ -2,10 +2,10 @@
 
 using namespace robot;
 
-void run( tesis::MessageServer* msgServer )
+extern "C" void run( tesis::MessageServer* msgServer )
 {
     RobotConfiguration robotConfig( "" );
-    RobotConfig config = robotConfig.get();
+    RobotConfig config;                                     // = robotConfig.get();
 
     bool quit = false;
     bool land = false;
@@ -22,7 +22,12 @@ void run( tesis::MessageServer* msgServer )
     PID_RP pid_p( config.PID.Pitch.Kp, config.PID.Pitch.Ki, config.PID.Pitch.Kd, config.PID.Pitch.Derivator, config.PID.Pitch.Integrator, config.PID.Pitch.P_limit, config.PID.Pitch.I_max, 0 );
     PID_Z pid_z( config.PID.Altitude.Kp, config.PID.Altitude.Kd, config.PID.Altitude.P_limit, 0 );
 
-    ARDrone robot( config.address.c_str() );
+    ARDrone robot;
+    
+    if (robot.open( "192.168.1.1" ) != 1)                   // config.address.c_str()
+    {
+        std::cerr << "ERROR when connecting to ARDrone" << std::endl;
+    }
 
     robot.setFlatTrim();
 
@@ -36,10 +41,14 @@ void run( tesis::MessageServer* msgServer )
 
         land = msgServer->get( "gui/action/land", "false" ).find( "false" ) == std::string::npos;
 
+        std::cout << "land: " << land << std::endl;
+        
         if( !land )
         {
-            is_visible = msgServer->get( "camera/robot_found", "true" ).find( "true" ) != std::string::npos;
-
+            is_visible = msgServer->get( "camera/robot_found", "false" ).find( "true" ) != std::string::npos;
+            
+            std::cout << "is visible: " << is_visible << std::endl;
+            
             if( is_visible )
             {
                 std::string robot_position_x = msgServer->get( "camera/robot_position/x" );
