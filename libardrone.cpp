@@ -4,7 +4,7 @@ using namespace robot;
 
 extern "C" void run( tesis::MessageServer* msgServer )
 {
-    RobotConfiguration robotConfig( "" );
+    RobotConfiguration robotConfig( "./libardrone.json" );
     RobotConfig config;                                     // = robotConfig.get();
 
     bool quit = false;
@@ -17,14 +17,14 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
     msgServer->announce( "robot/altitude" );
 
-    PID_Y pid_y( config.PID.Yaw.Kp, config.PID.Yaw.Ki, config.PID.Yaw.Kd, config.PID.Yaw.Derivator, config.PID.Yaw.Integrator, config.PID.Yaw.P_limit, config.PID.Yaw.I_max, config.PID.Yaw.I_min, 0 );
-    PID_RP pid_r( config.PID.Roll.Kp, config.PID.Roll.Ki, config.PID.Roll.Kd, config.PID.Roll.Derivator, config.PID.Roll.Integrator, config.PID.Roll.P_limit, config.PID.Roll.I_max, 0 );
-    PID_RP pid_p( config.PID.Pitch.Kp, config.PID.Pitch.Ki, config.PID.Pitch.Kd, config.PID.Pitch.Derivator, config.PID.Pitch.Integrator, config.PID.Pitch.P_limit, config.PID.Pitch.I_max, 0 );
-    PID_Z pid_z( config.PID.Altitude.Kp, config.PID.Altitude.Kd, config.PID.Altitude.P_limit, 0 );
+    PID_Y pid_y( config.PID.Yaw.Kp, config.PID.Yaw.Ki, config.PID.Yaw.Kd, config.PID.Yaw.P_limit, config.PID.Yaw.I_max, config.PID.Yaw.I_min );
+    PID_RP pid_r( config.PID.Roll.Kp, config.PID.Roll.Ki, config.PID.Roll.Kd, config.PID.Roll.P_limit, config.PID.Roll.I_max );
+    PID_RP pid_p( config.PID.Pitch.Kp, config.PID.Pitch.Ki, config.PID.Pitch.Kd, config.PID.Pitch.P_limit, config.PID.Pitch.I_max );
+    PID_Z pid_z( config.PID.Altitude.Kp, config.PID.Altitude.Kd, config.PID.Altitude.P_limit );
 
     ARDrone robot;
-    
-    if (robot.open( "192.168.1.1" ) != 1)                   // config.address.c_str()
+
+    if( robot.open( "192.168.1.1" ) != 1 )                  // config.address.c_str()
     {
         std::cerr << "ERROR when connecting to ARDrone" << std::endl;
     }
@@ -42,13 +42,13 @@ extern "C" void run( tesis::MessageServer* msgServer )
         land = msgServer->get( "gui/action/land", "false" ).find( "false" ) == std::string::npos;
 
         std::cout << "land: " << land << std::endl;
-        
+
         if( !land )
         {
             is_visible = msgServer->get( "camera/robot_found", "false" ).find( "true" ) != std::string::npos;
-            
+
             std::cout << "is visible: " << is_visible << std::endl;
-            
+
             if( is_visible )
             {
                 std::string robot_position_x = msgServer->get( "camera/robot_position/x" );
@@ -115,7 +115,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
             }
             else
             {
-                robot.move3D(roll_set, pitch_set, altitude_set, yaw_set);
+                robot.move3D( roll_set, pitch_set, altitude_set, yaw_set );
             }
         }
         else
@@ -126,6 +126,6 @@ extern "C" void run( tesis::MessageServer* msgServer )
         std::string finish_msg = msgServer->get( "gui/finish", "false" );
         std::istringstream( finish_msg ) >> std::boolalpha >> quit;
     }
-    
+
     robot.close();
 }

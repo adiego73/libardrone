@@ -1,0 +1,46 @@
+{
+    "address" : "192.168.1.1",
+    "PID" : {
+        "Roll" : {
+            "Kp" : 0.0025,
+            "Ki" : 0.0000001,
+            "Kd" : 0.000875,
+            "Integrator" : 0,
+            "Derivator" : 0,
+            "P_limit" : 0.12,
+            "I_max" : 1560000,
+            "I_min" : 0
+        },
+        "Pitch" : {
+            "Kp" : 0.0025,
+            "Ki" : 0.0000001,
+            "Kd" : 0.000875,
+            "Integrator" : 0,
+            "Derivator" : 0,
+            "P_limit" : 0.12,
+            "I_max" : 1560000,
+            "I_min" : 0
+        },
+        "Yaw" : {
+            "Kp" : 0.015,
+            "Ki" : 0,
+            "Kd" : 0.02,
+            "Integrator" : 0,
+            "Derivator" : 0,
+            "P_limit" : 1,
+            "I_max" : 1500,
+            "I_min" : -1500
+        },
+        "Altitude" : {
+            "Kp" : 0.0009,
+            "Ki" : 0.0000000001,
+            "Kd" : 0.24,
+            "Integrator" : 0,
+            "Derivator" : 0,
+            "P_limit" : 0.35,
+            "I_max" : 1560000,
+            "I_min" : 0
+        }
+    }
+
+}

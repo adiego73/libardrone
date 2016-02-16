@@ -9,7 +9,7 @@ namespace robot
 class PID_Z : public PID
 {
     public:
-        PID_Z( float kp, float kd, float P_limit, float set_point );
+        PID_Z( float kp, float kd, float P_limit );
         ~PID_Z();
 
         void setPoint( float set_point ) override;

@@ -11,7 +11,7 @@ namespace robot
 class PID_RP : public PID
 {
     public:
-        PID_RP( float kp, float ki, float kd, int D, int I, float P_limit, int I_max, float set_point );
+        PID_RP( float kp, float ki, float kd, float P_limit, int I_max );
         ~PID_RP();
 
         void setPoint( float set_point ) override;
