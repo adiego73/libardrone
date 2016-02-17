@@ -4,8 +4,8 @@ using namespace robot;
 
 extern "C" void run( tesis::MessageServer* msgServer )
 {
-    RobotConfiguration robotConfig( "./libardrone.json" );
-    RobotConfig config;                                     // = robotConfig.get();
+    RobotConfiguration robotConfig( "./config/libardrone.json" );
+    RobotConfig config = robotConfig.get();
 
     bool quit = false;
     bool land = false;
@@ -24,7 +24,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
     ARDrone robot;
 
-    if( robot.open( "192.168.1.1" ) != 1 )                  // config.address.c_str()
+    if( robot.open( config.address.c_str() ) != 1 )
     {
         std::cerr << "ERROR when connecting to ARDrone" << std::endl;
     }
@@ -41,20 +41,19 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
         land = msgServer->get( "gui/action/land", "false" ).find( "false" ) == std::string::npos;
 
-        std::cout << "land: " << land << std::endl;
-
         if( !land )
         {
             is_visible = msgServer->get( "camera/robot_found", "false" ).find( "true" ) != std::string::npos;
 
-            std::cout << "is visible: " << is_visible << std::endl;
-
-            if( is_visible )
+            // if the robot is visible and is flying
+            if( is_visible && robot.onGround() ==  0 )
             {
                 std::string robot_position_x = msgServer->get( "camera/robot_position/x" );
                 std::string robot_position_y = msgServer->get( "camera/robot_position/y" );
                 std::string robot_position_z = msgServer->get( "camera/robot_position/z" );
 
+                std::cout << "x: " << robot_position_x << " y: " << robot_position_y << " z: " << robot_position_z << std::endl;
+                
                 Point position;
                 position.x = std::stof( robot_position_x );
                 position.y = std::stof( robot_position_y );
@@ -63,6 +62,8 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 std::string destination_x = msgServer->get( "camera/destination/x", "0" );
                 std::string destination_y = msgServer->get( "camera/destination/y", "0" );
 
+                std::cout << "dx: " << destination_x << " dy: " << destination_y << std::endl;
+                
                 Point destination;
                 destination.x = std::stof( destination_x );
                 destination.y = std::stof( destination_y );
@@ -78,16 +79,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 angle = Util::normalize_angle( angle );
 
                 float distance = Util::distance( position, destination );
-                Point relative_position = Util::get_point( distance, angle );
 
-                Velocity velocity;
-                robot.getVelocity( &vx, &vy, &vz );
-                velocity.x = vx;
-                velocity.y = vy;
-                velocity.z = vz;
-
-                roll_set = pid_r.update( ( relative_position.x * -1 ), velocity.x, elapsed_time );
-                pitch_set = pid_p.update( relative_position.y, velocity.y, elapsed_time );
                 altitude_set = pid_z.update( robot.getAltitude(), 0 /* this value is not used */, elapsed_time );
 
                 if( distance < 10 )
@@ -102,24 +94,48 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 else
                 {
                     hover = false;
+                    
+                    Velocity velocity;
+                    robot.getVelocity( &vx, &vy, &vz );
+                    velocity.x = vx;
+                    velocity.y = vy;
+                    velocity.z = vz;
+
+                    Point relative_position = Util::get_point( distance, angle );
+                    roll_set = pid_r.update( ( relative_position.x * -1 ), velocity.x, elapsed_time );
+                    pitch_set = pid_p.update( relative_position.y, velocity.y, elapsed_time );
+                }
+            }
+            // if it is visible and is on ground, wait for the takeoff message.
+            else if( is_visible && robot.onGround() ==  1 )
+            {
+                bool takeoff = msgServer->get( "gui/action/takeoff", "false" ).find( "true" ) != std::string::npos;
+
+                if( takeoff )
+                {
+                    robot.takeoff();
                 }
             }
             else
             {
+                // if not visible and is flying, land.
                 if( robot.onGround() == 0 ) robot.landing();
             }
 
             if( hover )
             {
-                robot.move3D( 0, 0, altitude_set, yaw_set );
+                // if hove is set on true, and is flying, hover.
+                if( robot.onGround() == 0 ) robot.move3D( 0, 0, altitude_set, yaw_set );
             }
             else
             {
-                robot.move3D( roll_set, pitch_set, altitude_set, yaw_set );
+                // if should move.
+                if( robot.onGround() == 0 ) robot.move3D( roll_set, pitch_set, altitude_set, yaw_set );
             }
         }
         else
         {
+            // if it should land.
             if( robot.onGround() == 0 ) robot.landing();
         }
 

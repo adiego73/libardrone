@@ -15,6 +15,8 @@ add_library(ardrone SHARED libardrone.cpp
 
 add_subdirectory(src)
 
+set(INSTALL_DESTINATION "/home/diego/dev/c++/tesis-ardrone/bin")
+
 set(USER_LIB_PATH "/usr/local/lib")
 set(BOOST_LIB_PATH "/opt/boost_1_57_0/lib")
 set(CVDRONE_LIB_PATH "/opt/cvdrone/lib")
@@ -41,5 +43,6 @@ target_link_libraries(ardrone ${PTHREAD_LIB}
                                  ${CVDRONE_LIB} 
                              )    
 
-install(TARGETS ardrone DESTINATION /home/diego/dev/c++/tesis-ardrone/lib
+install(TARGETS ardrone DESTINATION "${INSTALL_DESTINATION}/lib/"
                         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+install(FILES ./config/libardrone.json DESTINATION "${INSTALL_DESTINATION}/config/")
