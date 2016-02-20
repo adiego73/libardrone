@@ -8,6 +8,7 @@
 
 #include <iostream>
 
+#include <boost/any.hpp>
 #include <boost/thread.hpp>
 
 namespace tesis
@@ -20,14 +21,9 @@ class MessageServer
         ~MessageServer();
 
         void announce( std::string topic );
-        void publish( std::string topic, std::string message );
-        std::string get( std::string topic );
-        std::string get( std::string topic, std::string default_value );
+        template<typename T> void publish( std::string topic, T message );
+        template<typename T> T get( std::string topic, T default_value );
         std::vector<std::string> topics();
-
-    private:
-        std::map<std::string, std::string> topic_map;
-        boost::mutex msg_mutex;
 };
 
 }

@@ -31,42 +31,31 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
     robot.setFlatTrim();
 
-    msgServer->publish( "robot/altitude", std::to_string( robot.getAltitude() ) );
+    msgServer->publish( "robot/altitude", robot.getAltitude() );
 
     long elapsed_time = 0;
 
     while( !quit )
     {
-        elapsed_time = std::stol( msgServer->get( "camera/elapsed_time", "0" ) );
+        elapsed_time = msgServer->get( "camera/elapsed_time", 0.0f );
 
-        land = msgServer->get( "gui/action/land", "false" ).find( "false" ) == std::string::npos;
+        land = msgServer->get( "gui/action/land", false );
 
         if( !land )
         {
-            is_visible = msgServer->get( "camera/robot_found", "false" ).find( "true" ) != std::string::npos;
+            is_visible = msgServer->get( "camera/robot_found", false );
 
             // if the robot is visible and is flying
             if( is_visible && robot.onGround() ==  0 )
             {
-                std::string robot_position_x = msgServer->get( "camera/robot_position/x" );
-                std::string robot_position_y = msgServer->get( "camera/robot_position/y" );
-                std::string robot_position_z = msgServer->get( "camera/robot_position/z" );
-
-                std::cout << "x: " << robot_position_x << " y: " << robot_position_y << " z: " << robot_position_z << std::endl;
-                
                 Point position;
-                position.x = std::stof( robot_position_x );
-                position.y = std::stof( robot_position_y );
-                position.z = std::stof( robot_position_z );
+                position.x = msgServer->get( "camera/robot_position/x", -1.0f );
+                position.y = msgServer->get( "camera/robot_position/y", -1.0f );
+                position.z = msgServer->get( "camera/robot_position/z", -1.0f );
 
-                std::string destination_x = msgServer->get( "camera/destination/x", "0" );
-                std::string destination_y = msgServer->get( "camera/destination/y", "0" );
-
-                std::cout << "dx: " << destination_x << " dy: " << destination_y << std::endl;
-                
                 Point destination;
-                destination.x = std::stof( destination_x );
-                destination.y = std::stof( destination_y );
+                destination.x = msgServer->get( "camera/destination/x", 0.0f );
+                destination.y = msgServer->get( "camera/destination/y", 0.0f );
 
                 float setpoint_yaw = Util::get_angle_as_deg( position, destination, robot.getYaw() );
                 pid_y.setPoint( setpoint_yaw );
@@ -109,7 +98,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
             // if it is visible and is on ground, wait for the takeoff message.
             else if( is_visible && robot.onGround() ==  1 )
             {
-                bool takeoff = msgServer->get( "gui/action/takeoff", "false" ).find( "true" ) != std::string::npos;
+                bool takeoff = msgServer->get( "gui/action/takeoff", false );
 
                 if( takeoff )
                 {
@@ -139,8 +128,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
             if( robot.onGround() == 0 ) robot.landing();
         }
 
-        std::string finish_msg = msgServer->get( "gui/finish", "false" );
-        std::istringstream( finish_msg ) >> std::boolalpha >> quit;
+        quit = msgServer->get( "gui/finish", false );;
     }
 
     robot.close();
