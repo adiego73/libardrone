@@ -12,10 +12,36 @@ extern "C" void run( tesis::MessageServer* msgServer )
     bool is_visible = false;
     bool hover = true;
 
+    double fixYaw = 0;
+    double yawValue = 0;
     double vx = 0, vy = 0, vz = 0;
     float yaw_set = 0, roll_set = 0, pitch_set = 0, altitude_set = 0;
 
     msgServer->announce( "robot/altitude" );
+
+    msgServer->announce( "robot/pitch/kp" );
+    msgServer->announce( "robot/pitch/ki" );
+    msgServer->announce( "robot/pitch/kd" );
+    msgServer->announce( "robot/pitch/set" );
+    msgServer->announce( "robot/pitch/value" );
+
+    msgServer->announce( "robot/roll/kp" );
+    msgServer->announce( "robot/roll/ki" );
+    msgServer->announce( "robot/roll/kd" );
+    msgServer->announce( "robot/roll/set" );
+    msgServer->announce( "robot/roll/value" );
+
+    msgServer->announce( "robot/altitude/kp" );
+    msgServer->announce( "robot/altitude/ki" );
+    msgServer->announce( "robot/altitude/kd" );
+    msgServer->announce( "robot/altitude/set" );
+    msgServer->announce( "robot/altitude/value" );
+
+    msgServer->announce( "robot/yaw/set" );
+    msgServer->announce( "robot/yaw/value" );
+
+    msgServer->announce( "robot/velocity/x" );
+    msgServer->announce( "robot/velocity/y" );
 
     PID_Y pid_y( config.PID.Yaw.Kp, config.PID.Yaw.Ki, config.PID.Yaw.Kd, config.PID.Yaw.P_limit, config.PID.Yaw.I_max, config.PID.Yaw.I_min );
     PID_RP pid_r( config.PID.Roll.Kp, config.PID.Roll.Ki, config.PID.Roll.Kd, config.PID.Roll.P_limit, config.PID.Roll.I_max );
@@ -35,8 +61,13 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
     long elapsed_time = 0;
 
+    pid_z.setPoint( 800 );
+
+    std::cout << "Bateria: " << robot.getBatteryPercentage() <<  std::endl;
+
     while( !quit )
     {
+//         std::cout << "Bateria: " << robot.getBatteryPercentage() << " %" << std::endl;
         elapsed_time = std::stol( msgServer->get( "camera/elapsed_time", "0" ) );
 
         land = msgServer->get( "gui/action/land", "false" ).find( "false" ) == std::string::npos;
@@ -48,12 +79,17 @@ extern "C" void run( tesis::MessageServer* msgServer )
             // if the robot is visible and is flying
             if( is_visible && robot.onGround() ==  0 )
             {
+                if (fixYaw ==  0)
+                    fixYaw = Util::rad_to_deg( -robot.getYaw());
+                
+                yawValue = Util::rad_to_deg( -robot.getYaw()) - fixYaw;
+                yawValue = Util::normalize_angle(yawValue);
+                
                 std::string robot_position_x = msgServer->get( "camera/robot_position/x" );
                 std::string robot_position_y = msgServer->get( "camera/robot_position/y" );
                 std::string robot_position_z = msgServer->get( "camera/robot_position/z" );
 
-                std::cout << "x: " << robot_position_x << " y: " << robot_position_y << " z: " << robot_position_z << std::endl;
-                
+
                 Point position;
                 position.x = std::stof( robot_position_x );
                 position.y = std::stof( robot_position_y );
@@ -62,25 +98,32 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 std::string destination_x = msgServer->get( "camera/destination/x", "0" );
                 std::string destination_y = msgServer->get( "camera/destination/y", "0" );
 
-                std::cout << "dx: " << destination_x << " dy: " << destination_y << std::endl;
-                
+
                 Point destination;
                 destination.x = std::stof( destination_x );
                 destination.y = std::stof( destination_y );
 
-                float setpoint_yaw = Util::get_angle_as_deg( position, destination, robot.getYaw() );
+                
+                float setpoint_yaw = Util::get_angle_as_deg( position, destination, yawValue );
                 pid_y.setPoint( setpoint_yaw );
 
                 pid_r.setPoint( destination.x );
                 pid_p.setPoint( destination.y );
 
                 float angle = setpoint_yaw;
-                angle -= robot.getYaw();
+                angle -= yawValue;
                 angle = Util::normalize_angle( angle );
 
                 float distance = Util::distance( position, destination );
 
-                altitude_set = pid_z.update( robot.getAltitude(), 0 /* this value is not used */, elapsed_time );
+                altitude_set = pid_z.update( robot.getAltitude() / 0.001, 0 /* this value is not used */, elapsed_time );
+
+                Velocity velocity;
+                robot.getVelocity( &vx, &vy, &vz );
+
+                velocity.x = vx / 0.001;
+                velocity.y = -vy / 0.001;
+                velocity.z = -vz / 0.001;
 
                 if( distance < 10 )
                 {
@@ -94,17 +137,40 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 else
                 {
                     hover = false;
-                    
-                    Velocity velocity;
-                    robot.getVelocity( &vx, &vy, &vz );
-                    velocity.x = vx;
-                    velocity.y = vy;
-                    velocity.z = vz;
 
                     Point relative_position = Util::get_point( distance, angle );
-                    roll_set = pid_r.update( ( relative_position.x * -1 ), velocity.x, elapsed_time );
+                    roll_set = pid_r.update( ( relative_position.x * -1 ), velocity.x, elapsed_time ) ;
                     pitch_set = pid_p.update( relative_position.y, velocity.y, elapsed_time );
                 }
+
+                
+                std::cout << "--------------" << robot.getYaw() << " " << yawValue << std::endl;
+                
+                msgServer->publish( "robot/altitude", std::to_string( robot.getAltitude() ) );
+
+                msgServer->publish( "robot/pitch/kp", std::to_string( pid_p.getKp() ) );
+                msgServer->publish( "robot/pitch/ki", std::to_string( pid_p.getKi() ) );
+                msgServer->publish( "robot/pitch/kd", std::to_string( pid_p.getKd() ) );
+                msgServer->publish( "robot/pitch/set", std::to_string( pitch_set ) );
+                msgServer->publish( "robot/pitch/value", std::to_string( Util::rad_to_deg( -robot.getPitch() / 0.001 ) ) );
+
+                msgServer->publish( "robot/roll/kp", std::to_string( pid_r.getKp() ) );
+                msgServer->publish( "robot/roll/ki", std::to_string( pid_r.getKi() ) );
+                msgServer->publish( "robot/roll/kd", std::to_string( pid_r.getKd() ) );
+                msgServer->publish( "robot/roll/set", std::to_string( roll_set ) );
+                msgServer->publish( "robot/roll/value", std::to_string( Util::rad_to_deg( robot.getRoll() / 0.001 ) ) );
+
+                msgServer->publish( "robot/altitude/kp", std::to_string( pid_z.getKp() ) );
+                msgServer->publish( "robot/altitude/ki", std::to_string( pid_z.getKi() ) );
+                msgServer->publish( "robot/altitude/kd", std::to_string( pid_z.getKd() ) );
+                msgServer->publish( "robot/altitude/set", std::to_string( altitude_set ) );
+                msgServer->publish( "robot/altitude/value", std::to_string( robot.getAltitude() ) );
+
+                msgServer->publish( "robot/yaw/set", std::to_string( yaw_set ) );
+                msgServer->publish( "robot/yaw/value", std::to_string( yawValue ) );
+
+                msgServer->publish( "robot/velocity/x", std::to_string( velocity.x ) );
+                msgServer->publish( "robot/velocity/y", std::to_string( velocity.y ) );
             }
             // if it is visible and is on ground, wait for the takeoff message.
             else if( is_visible && robot.onGround() ==  1 )
@@ -119,7 +185,11 @@ extern "C" void run( tesis::MessageServer* msgServer )
             else
             {
                 // if not visible and is flying, land.
-                if( robot.onGround() == 0 ) robot.landing();
+                if( robot.onGround() == 0 ) 
+                {
+                    fixYaw = 0;
+                    robot.landing();
+                }
             }
 
             if( hover )
@@ -130,7 +200,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
             else
             {
                 // if should move.
-                if( robot.onGround() == 0 ) robot.move3D( roll_set, pitch_set, altitude_set, yaw_set );
+                if( robot.onGround() == 0 ) robot.move3D( roll_set / -0.2, pitch_set / -0.2, altitude_set, yaw_set );
             }
         }
         else
@@ -145,3 +215,4 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
     robot.close();
 }
+
