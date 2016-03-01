@@ -85,23 +85,15 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 yawValue = Util::rad_to_deg( -robot.getYaw()) - fixYaw;
                 yawValue = Util::normalize_angle(yawValue);
                 
-                std::string robot_position_x = msgServer->get( "camera/robot_position/x" );
-                std::string robot_position_y = msgServer->get( "camera/robot_position/y" );
-                std::string robot_position_z = msgServer->get( "camera/robot_position/z" );
-
-
-                Point position;
-                position.x = std::stof( robot_position_x );
-                position.y = std::stof( robot_position_y );
-                position.z = std::stof( robot_position_z );
-
-                std::string destination_x = msgServer->get( "camera/destination/x", "0" );
-                std::string destination_y = msgServer->get( "camera/destination/y", "0" );
-
+		
+		Point position;
+		position.x = Util::getMsgFloat(msgServer, "camera/robot_position/x");
+		position.y = Util::getMsgFloat(msgServer, "camera/robot_position/y");
+                position.z = Util::getMsgFloat(msgServer, "camera/robot_position/z");
 
                 Point destination;
-                destination.x = std::stof( destination_x );
-                destination.y = std::stof( destination_y );
+                destination.x = Util::getMsgFloat(msgServer, "camera/destination/x", "0");
+                destination.y = Util::getMsgFloat(msgServer, "camera/destination/y", "0");
 
                 
                 float setpoint_yaw = Util::get_angle_as_deg( position, destination, yawValue );
@@ -116,7 +108,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
                 float distance = Util::distance( position, destination );
 
-                altitude_set = pid_z.update( robot.getAltitude() / 0.001, 0 /* this value is not used */, elapsed_time );
+                altitude_set = pid_z.update( robot.getAltitude(), 0 /* this value is not used */, elapsed_time );
 
                 Velocity velocity;
                 robot.getVelocity( &vx, &vy, &vz );
@@ -152,13 +144,13 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 msgServer->publish( "robot/pitch/ki", std::to_string( pid_p.getKi() ) );
                 msgServer->publish( "robot/pitch/kd", std::to_string( pid_p.getKd() ) );
                 msgServer->publish( "robot/pitch/set", std::to_string( pitch_set ) );
-                msgServer->publish( "robot/pitch/value", std::to_string( Util::rad_to_deg( -robot.getPitch() / 0.001 ) ) );
+                msgServer->publish( "robot/pitch/value", std::to_string( Util::rad_to_deg( -robot.getPitch()) ) );
 
                 msgServer->publish( "robot/roll/kp", std::to_string( pid_r.getKp() ) );
                 msgServer->publish( "robot/roll/ki", std::to_string( pid_r.getKi() ) );
                 msgServer->publish( "robot/roll/kd", std::to_string( pid_r.getKd() ) );
                 msgServer->publish( "robot/roll/set", std::to_string( roll_set ) );
-                msgServer->publish( "robot/roll/value", std::to_string( Util::rad_to_deg( robot.getRoll() / 0.001 ) ) );
+                msgServer->publish( "robot/roll/value", std::to_string( Util::rad_to_deg( robot.getRoll()) ) );
 
                 msgServer->publish( "robot/altitude/kp", std::to_string( pid_z.getKp() ) );
                 msgServer->publish( "robot/altitude/ki", std::to_string( pid_z.getKi() ) );
