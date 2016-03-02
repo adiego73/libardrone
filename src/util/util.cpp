@@ -91,17 +91,3 @@ float Util::normalize_angle( float angle )
     return angle;
 }
 
-float Util::getMsgFloat(tesis::MessageServer* msgServer, std::string topic)
-{
-  std::string value = msgServer->get( topic);
-  return std::stof( value );
-  
-}
-
-float Util::getMsgFloat(tesis::MessageServer* msgServer, std::string topic, std::string szdefault)
-{
-  std::string value = msgServer->get( topic, szdefault);
-  return std::stof( value );
-  
-}
-

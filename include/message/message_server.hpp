@@ -23,6 +23,14 @@ class MessageServer
         void publish( std::string topic, std::string message );
         std::string get( std::string topic );
         std::string get( std::string topic, std::string default_value );
+	float getFloat( std::string topic );
+	float getFloat( std::string topic, float default_value );
+	int getInt( std::string topic );
+	int getInt( std::string topic, int default_value );
+	long getLong( std::string topic );
+	long getLong( std::string topic, long default_value );
+	bool getBool( std::string topic );
+	bool getBool( std::string topic, bool default_value );
         std::vector<std::string> topics();
 
     private:

@@ -18,8 +18,6 @@ class Util
         static float distance( Point opoint, Point dpoint );
         static Point get_point( int dist, float deg );
         static float normalize_angle(float angle);
-	static float getMsgFloat(tesis::MessageServer* msgServer, std::string topic, std::string szDefault);
-	static float getMsgFloat(tesis::MessageServer* msgServer, std::string topic);
     private:
         Util();
         ~Util();
