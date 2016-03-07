@@ -14,8 +14,8 @@ struct PIDValues
     float Integrator;
     float Derivator;
     float P_limit;
-    float I_max;
-    float I_min;
+    long I_max;
+    long I_min;
 };
 
 struct PIDConfig

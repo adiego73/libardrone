@@ -1,8 +1,8 @@
 #include "classes/pid_rp.hpp"
-
+#include <iostream>
 using namespace robot;
 
-PID_RP::PID_RP( float kp, float ki, float kd, float P_limit, int I_max ):
+PID_RP::PID_RP( float kp, float ki, float kd, float P_limit, long I_max ):
     PID( kp, ki, kd, P_limit, I_max, 0 )
 {
 
@@ -22,11 +22,17 @@ void PID_RP::setPoint( float set_point )
     this->error = 0.0f;
 }
 
-void PID_RP::integratorIncrease( float error, float max, float change )
+void PID_RP::updateSamePoint( float set_point )
+{
+    this->set_point = set_point;
+
+}
+
+void PID_RP::integratorIncrease( float error, long max, float change )
 {
     if( error < 0 && this->Integrator > 0 )
     {
-        this->Integrator = std::max( 0.0, this->Integrator + 14.0 * error );
+       this->Integrator = std::max( 0.0, this->Integrator + 14.0 * error );
     }
     else if( error > 0 && this->Integrator < 0 )
     {
@@ -34,25 +40,30 @@ void PID_RP::integratorIncrease( float error, float max, float change )
     }
     else if( change < 0 && this->Integrator > 0 && error > 0 ) //si me estoy acercando
     {
-        this->Integrator = std::max( 0.0f, float( this->Integrator + error ) );
+      this->Integrator = std::max( 0.0f, float( this->Integrator + error ) );
+      
+      
     }
     else if( change > 0 && this->Integrator < 0 && error < 0 ) //si me estoy acercando
     {
-        this->Integrator = std::min( 0.0f, float( this->Integrator + error ) );
+      this->Integrator = std::min( 0.0f, float( this->Integrator + error ) );
+      std::cout<<"integrator: "<<this->Integrator <<std::endl;
+      
     }
     else
     {
         this->Integrator += error;
     }
-
+    
     if( this->Integrator > max )
     {
-        this->Integrator  = max;
+      this->Integrator  = max;
     }
     else if( this->Integrator < -max )
     {
-        this->Integrator  = -max;
+      this->Integrator  = -max;
     }
+    
 
 }
 

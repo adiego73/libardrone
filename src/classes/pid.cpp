@@ -2,7 +2,7 @@
 
 using namespace robot;
 
-PID::PID( float kp, float ki, float kd, float P_limit, int I_max, int I_min ) :
+PID::PID( float kp, float ki, float kd, float P_limit, long I_max, long I_min ) :
     Kp( kp ), Ki( ki ), Kd( kd ),
     Derivator( 0 ), Integrator( 0 ),
     P_limit( P_limit ), Integrator_max( I_max ), Integrator_min( I_min ),

@@ -1,6 +1,7 @@
 #include "util/util.hpp"
 
 using namespace robot;
+using namespace tesis;
 Util::Util()
 {
 
@@ -29,7 +30,7 @@ float Util::distance( Point opoint, Point dpoint )
     return std::sqrt( std::abs( point.x * point.x + point.y * point.y ) );
 }
 
-float Util::get_angle_as_deg( Point opoint, Point dpoint )
+float Util::get_angle_as_deg( Point opoint, Point dpoint, float deg )
 {
     Point point;
     float angle = 0;
@@ -39,7 +40,7 @@ float Util::get_angle_as_deg( Point opoint, Point dpoint )
 
     if( point.x != 0 )
     {
-        angle = std::atan( std::abs( (float)point.y / (float)point.x ) );
+        angle = std::atan( std::abs( point.y / point.x ) );
         angle = Util::rad_to_deg( angle );
 
         if( point.x > 0 )
@@ -53,17 +54,14 @@ float Util::get_angle_as_deg( Point opoint, Point dpoint )
                 angle = ( 90 - angle ) * -1;
             }
         }
-        else 
-	{
-	    if( point.y < 0 )
-	    {
-		angle += 90;
-	    }
-	    else
-	    {
-		angle = 90 - angle;
-	    }
-	}
+        else if( point.y < 0 )
+        {
+            angle += 90;
+        }
+        else
+        {
+            angle = 90 - angle;
+        }
     }
 
     return angle;
@@ -74,8 +72,8 @@ Point Util::get_point( int dist, float deg )
     Point point;
     float rad = Util::deg_to_rad( deg );
 
-    point.x = dist * std::sin( rad );
-    point.y = dist * std::cos( rad );
+    point.y = dist * std::sin( rad );
+    point.x = dist * std::cos( rad );
 
     return point;
 }
@@ -92,5 +90,19 @@ float Util::normalize_angle( float angle )
     }
 
     return angle;
+}
+
+float Util::getMsgFloat(tesis::MessageServer* msgServer, std::string topic)
+{
+  std::string value = msgServer->get( topic);
+  return std::stof( value );
+  
+}
+
+float Util::getMsgFloat(tesis::MessageServer* msgServer, std::string topic, std::string szdefault)
+{
+  std::string value = msgServer->get( topic, szdefault);
+  return std::stof( value );
+  
 }
 
