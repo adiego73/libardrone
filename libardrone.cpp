@@ -12,6 +12,8 @@ extern "C" void run( tesis::MessageServer* msgServer )
     bool is_visible = false;
     bool hover = true;
     bool auto_control = false;
+    bool aire_y_estabilizado = false;
+    
     long lastRobotState = 0;
     long actualRobotState = 0;
     struct timeval start, end;
@@ -78,7 +80,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 
     long elapsed_time = 0;
 
-    pid_z.setPoint( 700 );
+  //  pid_z.setPoint( 700 );
 
     std::cout << "Bateria: " << robot.getBatteryPercentage() <<  std::endl;
 
@@ -106,9 +108,11 @@ extern "C" void run( tesis::MessageServer* msgServer )
 	  velocity.z = -vz / 0.001;
 	  
 	  
-	  if(lastRobotState == 458752 && actualRobotState == 458753)
-	      fixYaw = Util::rad_to_deg( -robot.getYaw());
-	    
+	  if(lastRobotState == 458752 && actualRobotState == 458753)//458752: estabilizando - 458753: estabilizado
+	  {
+	    aire_y_estabilizado = true;
+	    fixYaw = Util::rad_to_deg( -robot.getYaw());
+	  }
 	  yawValue = Util::rad_to_deg( -robot.getYaw()) - fixYaw;
 	  yawValue = Util::normalize_angle(yawValue);
 
@@ -119,7 +123,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 	      auto_control = msgServer->getBool( "gui/action/autocontrol", false );
 
 	      // if the robot is visible and is flying
-	      if(auto_control &&  is_visible && robot.onGround() ==  0 )
+	      if(auto_control &&  is_visible && robot.onGround() ==  0 && aire_y_estabilizado)
 	      {
 		  
 	         
@@ -151,7 +155,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 		      destinoId = newDestino; 
 		      pid_p.setPoint(destination.y);
 		      pid_r.setPoint(destination.x);
-
+		      pid_z.setPoint(destination.z);
 		  }
 		  else
 		  {
@@ -234,6 +238,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 		  if( takeoff )
 		  {
 		      robot.setFlatTrim();
+		      aire_y_estabilizado = false;
 		      robot.takeoff();
 		      roll_set = 0;
 		      pitch_set = 0;
@@ -245,6 +250,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 	      else if(!is_visible && robot.onGround() ==  0)
 	      {
 		  fixYaw = 0;
+		  aire_y_estabilizado = false;
 		  robot.landing();
 		  
 		  roll_set = 0;
@@ -269,6 +275,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 	      // if it should land.
 	      if( robot.onGround() == 0 )
 	      {
+		aire_y_estabilizado = false;
 		robot.landing();
 		roll_set = 0;
 		pitch_set = 0;
