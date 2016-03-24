@@ -298,7 +298,7 @@ extern "C" void run( tesis::MessageServer* msgServer )
 	  
 	  lastRobotState = actualRobotState ; 
 	  actualRobotState = robot.getNavdataState();
-	  std::string squit = msgServer->get( "gui/finish", "false");
+	  
 	  quit = msgServer->getBool( "gui/finish", false);
 	}
 	usleep(500); //0,035 segundos//0,010
