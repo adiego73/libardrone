@@ -216,14 +216,8 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 // if it is visible and is on ground, wait for the takeoff message.
                 else if( is_visible && robot.onGround() ==  1 )
                 {
-                    bool takeoff = false;
-
                     // if the takeoff signal was gave
-                    if( msgServer->getBool( "gui/action/takeoff", false )
-                            // or, if the autocontrol is on, the robot is ready and should go to the first destination.
-                            || ( msgServer->getBool( "gui/action/autocontrol", false )
-                                 && robot.getNavdataState() ==  ROBOT_STATE_READY
-                                 && msgServer->getBool( "routine/destination/first", false ) ) )
+                    if( msgServer->getBool( "gui/action/takeoff", false ) )
                     {
                         robot.setFlatTrim();
                         aire_y_estabilizado = false;
@@ -235,13 +229,15 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     }
                 }
                 // if not visible and is flying, land.
-                else if( !is_visible && robot.onGround() ==  0 || msgServer->getBool( "routine/destination/last", false ))
+                else if( !is_visible && robot.onGround() ==  0 || msgServer->getBool( "routine/destination/last", false ) )
                 {
                     fixYaw = 0;
                     aire_y_estabilizado = false;
-                    // hover at 10cm of altitude before land.
-                    robot.move3D( 0, 0, 10, 0 );
-                    
+
+                    // move down to 30cm before land
+                    while( robot.getAltitude() >= 0.3f )
+                        robot.move3D( 0, 0, -0.1, 0 );
+
                     // land
                     robot.landing();
 
@@ -251,13 +247,31 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     altitude_set = 0;
                 }
 
+                // when it should be over the checkpoint
                 if( hover )
                 {
-                    // if hove is set on true, and is flying, hover.
-                    if( robot.onGround() == 0 ) robot.move3D( 0, 0, altitude_set, yaw_set );
+                    // if the destination is on the floor, it should land
+                    if( msgServer->getFloat( "camera/destination/z", 0 ) == 0 )
+                    {
+                        while( robot.getAltitude() >= 0.3f )
+                            robot.move3D( 0, 0, -0.1, yaw_set );
+
+                        robot.landing();
+                    }
+                    // else, it should stay.
+                    else
+                    {
+                        robot.move3D( 0, 0, altitude_set, yaw_set );
+                    }
                 }
                 else
                 {
+                    // if the robot is already on the floor, it should takeoff first
+                    if( robot.getAltitude() <= 0.1 )
+                    {
+                        robot.takeoff();
+                    }
+                    
                     // if should move.
                     if( robot.onGround() == 0 ) robot.move3D( pitch_set / 0.2, -roll_set / 0.2, altitude_set, yaw_set );
                 }
@@ -267,8 +281,9 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 // if it should land.
                 if( robot.onGround() == 0 )
                 {
-                    // hover at 10cm of altitude before land.
-                    robot.move3D( 0, 0, 10, 0 );
+                    // move down to 30cm before land
+                    while( robot.getAltitude() >= 0.3f )
+                        robot.move3D( 0, 0, -0.1, 0 );
 
                     aire_y_estabilizado = false;
                     robot.landing();
