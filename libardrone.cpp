@@ -229,22 +229,21 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     }
                 }
                 // if not visible and is flyis_visibleing, land.
-                else if( !is_visible && robot.onGround() ==  0 || msgServer->getBool( "routine/destination/last", false ) )
+                else if( position.x == -1 && robot.onGround() ==  0 || msgServer->getBool( "routine/destination/last", false ) )
                 {
-                    fixYaw = 0;
-                    aire_y_estabilizado = false;
-
                     // move down to 30cm before land
-                    while( robot.getAltitude() >= 0.3f )
+                    if( robot.getAltitude() >= 0.3f )
                         robot.move3D( 0, 0, -0.1, 0 );
+		    else
+		    {
+		      // land
+		      robot.landing();
 
-                    // land
-                    robot.landing();
-
-                    roll_set = 0;
-                    pitch_set = 0;
-                    yaw_set = 0;
-                    altitude_set = 0;
+		      roll_set = 0;
+		      pitch_set = 0;
+		      yaw_set = 0;
+		      altitude_set = 0;
+		    }
                 }
 
                 // when it should be over the checkpoint
@@ -253,10 +252,16 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     // if the destination is on the floor, it should land
                     if( msgServer->getFloat( "camera/destination/z", 0 ) == 0 )
                     {
-                        while( robot.getAltitude() >= 0.3f )
+                        if( robot.getAltitude() >= 0.3f )
                             robot.move3D( 0, 0, -0.1, yaw_set );
-
-                        robot.landing();
+			else
+			{
+			  robot.landing();
+			  roll_set = 0;
+			  pitch_set = 0;
+			  yaw_set = 0;
+			  altitude_set = 0;
+			}
                     }
                     // else, it should stay.
                     else
