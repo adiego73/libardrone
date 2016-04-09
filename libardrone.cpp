@@ -124,22 +124,22 @@ extern "C" void run( tesis::MessageServer* msgServer )
                 is_visible = msgServer->getBool( "camera/robot_found", false );
                 auto_control = msgServer->getBool( "gui/action/autocontrol", false );
 
-		Point position;
-		position.x = msgServer->getFloat( "camera/robot_position/x" );
-		position.y = msgServer->getFloat( "camera/robot_position/y" );
-		position.z = msgServer->getFloat( "camera/robot_position/z" );
+                Point position;
+                position.x = msgServer->getFloat( "camera/robot_position/x", 0.0f );
+                position.y = msgServer->getFloat( "camera/robot_position/y", 0.0f );
+                position.z = msgServer->getFloat( "camera/robot_position/z", 0.0f );
 
                 // if the robot is visible and is flying
                 if( auto_control &&  position.x != -1 && robot.onGround() ==  0 && aire_y_estabilizado )
                 {
-                    
+
                     Point destination;
                     destination.x = msgServer->getFloat( "camera/destination/x", 0 );
                     destination.y = msgServer->getFloat( "camera/destination/y", 0 );
                     destination.z = msgServer->getFloat( "camera/destination/z", 0 );
 
                     int newDestino = msgServer->getFloat( "camera/destination/id", 0 );
-                    
+
                     float setpoint_yaw = Util::get_angle_as_deg( position, destination );
 
                     //********** Codigo q faltaba ************************
@@ -234,16 +234,16 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     // move down to 30cm before land
                     if( robot.getAltitude() >= 0.3f )
                         robot.move3D( 0, 0, -0.1, 0 );
-		    else
-		    {
-		      // land
-		      robot.landing();
+                    else
+                    {
+                        // land
+                        robot.landing();
 
-		      roll_set = 0;
-		      pitch_set = 0;
-		      yaw_set = 0;
-		      altitude_set = 0;
-		    }
+                        roll_set = 0;
+                        pitch_set = 0;
+                        yaw_set = 0;
+                        altitude_set = 0;
+                    }
                 }
 
                 // when it should be over the checkpoint
@@ -254,14 +254,14 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     {
                         if( robot.getAltitude() >= 0.3f )
                             robot.move3D( 0, 0, -0.1, yaw_set );
-			else
-			{
-			  robot.landing();
-			  roll_set = 0;
-			  pitch_set = 0;
-			  yaw_set = 0;
-			  altitude_set = 0;
-			}
+                        else
+                        {
+                            robot.landing();
+                            roll_set = 0;
+                            pitch_set = 0;
+                            yaw_set = 0;
+                            altitude_set = 0;
+                        }
                     }
                     // else, it should stay.
                     else
@@ -274,19 +274,19 @@ extern "C" void run( tesis::MessageServer* msgServer )
                     // if the robot is already on the floor, it should takeoff first
                     if( robot.onGround() )
                     {
-			robot.setFlatTrim();
+                        robot.setFlatTrim();
                         aire_y_estabilizado = false;
                         robot.takeoff();
                         roll_set = 0;
                         pitch_set = 0;
                         yaw_set = 0;
                         altitude_set = 0;
-			
+
                         robot.takeoff();
                     }
                     // if should move.
-                    else if( robot.onGround() == 0 && aire_y_estabilizado)
-		      robot.move3D( pitch_set / 0.2, -roll_set / 0.2, altitude_set, yaw_set );
+                    else if( robot.onGround() == 0 && aire_y_estabilizado )
+                        robot.move3D( pitch_set / 0.2, -roll_set / 0.2, altitude_set, yaw_set );
                 }
             }
             else
