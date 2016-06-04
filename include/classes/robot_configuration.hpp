@@ -16,17 +16,17 @@ namespace robot
 
 class RobotConfiguration
 {
-    public:
-        RobotConfiguration(std::string path);
-        RobotConfig get();
-        
-        ~RobotConfiguration();
+public:
+	RobotConfiguration ( std::string path );
+	RobotConfig get();
 
-    private:
-        std::string path;
-        RobotConfig configuration;
-        
-        void parse();
+	~RobotConfiguration();
+
+private:
+	std::string path;
+	RobotConfig configuration;
+
+	void parse();
 };
 
 

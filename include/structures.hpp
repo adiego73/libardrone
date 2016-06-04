@@ -8,18 +8,16 @@ namespace robot
 #define MAX_ANGLE 180
 #endif
 
-struct Point
-{
-    float x;
-    float y;
-    float z;
+struct Point {
+	float x;
+	float y;
+	float z;
 };
 
-struct Velocity
-{
-    double x;
-    double y;
-    double z;
+struct Velocity {
+	double x;
+	double y;
+	double z;
 };
 
 }
