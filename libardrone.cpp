@@ -61,6 +61,8 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 	msgServer->announce ( "robot/destino/dist/total" );
 	msgServer->announce ( "robot/destino/angulo" );
 	msgServer->announce ( "robot/destino/setpointyaw" );
+	msgServer->announce ( "robot/estabilizado" );
+	
 
 	PID_Y pid_y ( config.PID.Yaw.Kp, config.PID.Yaw.Ki, config.PID.Yaw.Kd, config.PID.Yaw.P_limit, config.PID.Yaw.I_max, config.PID.Yaw.I_min );
 	PID_RP pid_r ( config.PID.Roll.Kp, config.PID.Roll.Ki, config.PID.Roll.Kd, config.PID.Roll.P_limit, config.PID.Roll.I_max );
@@ -107,7 +109,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 			velocity.z = -vz / 0.001;
 
 
-			if ( lastRobotState == 458752 && actualRobotState == 458753 ) { //458752: estabilizando - 458753: estabilizado
+			if ( lastRobotState == 458752 && (actualRobotState == 458753 || actualRobotState == 196608) ) { //458752: estabilizando - 458753: estabilizado
 				aire_y_estabilizado = true;
 				fixYaw = Util::rad_to_deg ( -robot.getYaw() );
 			}
@@ -167,7 +169,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 
 					altitude_set = pid_z.update ( robot.getAltitude() * 1000, 0 /* this value is not used */, elapsed_time );
 
-					if ( distance < 10 ) {
+					if ( distance < 15 || (destination.z == 0 && robot.getAltitude() == 0 && distance < 20)) {
 						hover = true;
 						roll_set = 0;
 						pitch_set = 0;
@@ -216,13 +218,15 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 				else if ( is_visible && robot.onGround() ==  1 ) {
 					// if the takeoff signal was gave
 					if ( msgServer->getBool ( "gui/action/takeoff", false ) || (auto_control && destination.z > 0) ) {
-						robot.setFlatTrim();
+						//robot.setFlatTrim();
 						aire_y_estabilizado = false;
-						robot.takeoff();
+						
 						roll_set = 0;
 						pitch_set = 0;
 						yaw_set = 0;
 						altitude_set = 0;
+						robot.takeoff();
+						robot.move3D ( 0, 0, altitude_set, yaw_set );
 					}
 				}
 				// if not visible and is flying, land.
@@ -262,15 +266,16 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 				} else {
 					// if the robot is already on the floor, it should takeoff first
 					if ( robot.onGround() ) {
-						robot.setFlatTrim();
+						//robot.setFlatTrim();
 						aire_y_estabilizado = false;
-						robot.takeoff();
+						
 						roll_set = 0;
 						pitch_set = 0;
 						yaw_set = 0;
 						altitude_set = 0;
 
 						robot.takeoff();
+						robot.move3D ( 0, 0, altitude_set, yaw_set );
 					}
 					// if should move.
 					else if ( robot.onGround() == 0 && aire_y_estabilizado )
@@ -301,6 +306,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 			msgServer->publish ( "robot/onground", std::to_string ( robot.onGround() ) );
 			msgServer->publish ( "robot/state", std::to_string ( robot.getNavdataState() ) );
 			msgServer->publish ( "robot/battery", std::to_string ( robot.getBatteryPercentage() ) );
+			msgServer->publish ( "robot/estabilizado", ( aire_y_estabilizado ? "true": "false") );
 
 			lastRobotState = actualRobotState ;
 			actualRobotState = robot.getNavdataState();
