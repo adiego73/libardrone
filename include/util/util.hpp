@@ -18,6 +18,7 @@ public:
 	static float distance ( Point opoint, Point dpoint );
 	static Point get_point ( int dist, float deg );
 	static float normalize_angle ( float angle );
+	static float VelXY( Velocity vel);
 private:
 	Util();
 	~Util();

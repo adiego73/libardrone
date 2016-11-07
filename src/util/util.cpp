@@ -80,4 +80,8 @@ float Util::normalize_angle ( float angle )
 
 	return angle;
 }
+float Util::VelXY( Velocity vel){
+	return sqrt(vel.x * vel.x + vel.y * vel.y);
+		
+}
 

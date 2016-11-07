@@ -10,7 +10,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 	bool quit = false;
 	bool land = false;
 	bool is_visible = false;
-	bool hover = true;
+	bool hover = false;
 	bool auto_control = false;
 	bool aire_y_estabilizado = false;
 
@@ -74,7 +74,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 
 	while ( robot.open ( config.address.c_str() ) != 1 ) {
 		std::cerr << "ERROR when connecting to ARDrone" << std::endl;
-		usleep ( 500 );
+		std::cout << usleep ( 500000 )<<std::endl;
 	}
 
 	robot.setFlatTrim();
@@ -108,10 +108,12 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 			velocity.y = vx / 0.001;
 			velocity.z = -vz / 0.001;
 
-
-			if ( lastRobotState == 458752 && (actualRobotState == 458753 || actualRobotState == 196608) ) { //458752: estabilizando - 458753: estabilizado
+			//458752: estabilizando - 458753: estabilizado - hover: 262144 - move: 196608
+			if ( lastRobotState == 458752 && (actualRobotState == 458753 || actualRobotState == 196608  || actualRobotState == 262144) ) { 
 				aire_y_estabilizado = true;
 				fixYaw = Util::rad_to_deg ( -robot.getYaw() );
+				std::cout << "Estabilizado "<< std::endl;
+						
 			}
 
 			yawValue = Util::rad_to_deg ( -robot.getYaw() ) - fixYaw;
@@ -134,6 +136,13 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 
 				int newDestino = msgServer->getFloat ( "rutina/destination/id", 0 );
 				
+				Point dest = destination;
+				if(destination.z == 0)
+					dest.z = 400;
+				
+				
+				float distance = Util::distance ( position, dest );
+					
 				// if the robot is visible and is flying
 				if ( auto_control &&  position.x != -1 && robot.onGround() ==  0 && aire_y_estabilizado ) {
 
@@ -148,7 +157,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 						pid_p.setPoint ( destination.y );
 						pid_r.setPoint ( destination.x );
 						if (destination.z == 0)
-							pid_z.setPoint (300); 
+							pid_z.setPoint (400); 
 						else
 							pid_z.setPoint ( destination.z );
 					} else {
@@ -162,10 +171,10 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 
 					Point dest = destination;
 					if(destination.z == 0)
-						dest.z = 300;
+						dest.z = 400;
 					
 					
-					float distance = Util::distance ( position, dest );
+					distance = Util::distance ( position, dest );
 
 					altitude_set = pid_z.update ( robot.getAltitude() * 1000, 0 /* this value is not used */, elapsed_time );
 
@@ -216,8 +225,12 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 				}
 				// if it is visible and is on ground, wait for the takeoff message.
 				else if ( is_visible && robot.onGround() ==  1 ) {
+					std::cout << "En tierra, distancia: "<< distance << std::endl;
+					
 					// if the takeoff signal was gave
-					if ( msgServer->getBool ( "gui/action/takeoff", false ) || (auto_control && destination.z > 0) ) {
+					if ( msgServer->getBool ( "gui/action/takeoff", false ) || (auto_control && distance > 30) ) {//&& destination.z > 0 
+					std::cout << "Despegar"<<std::endl;
+					
 						//robot.setFlatTrim();
 						aire_y_estabilizado = false;
 						
@@ -227,6 +240,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 						altitude_set = 0;
 						robot.takeoff();
 						robot.move3D ( 0, 0, altitude_set, yaw_set );
+						hover = false;
 					}
 				}
 				// if not visible and is flying, land.
@@ -236,6 +250,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 						robot.move3D ( 0, 0, -0.1, 0 );
 					else {
 					*/	// land
+					std::cout << "Aterrizar"<<std::endl;
 						robot.landing();
 
 						roll_set = 0;
@@ -246,12 +261,13 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 				}
 
 				// when it should be over the checkpoint
-				if ( hover ) {
+				if ( hover && robot.onGround() ==  0) {
 					// if the destination is on the floor, it should land
-					if ( destination.z == 0 ) {
+					if ( destination.z == 0 && Util::VelXY(velocity) < 20 ) {
 						/*if ( robot.getAltitude() >= 0.3f )
 							robot.move3D ( 0, 0, -0.1, yaw_set );
 						else {*/
+							std::cout << "Aterrizar"<<std::endl;
 							robot.landing();
 							roll_set = 0;
 							pitch_set = 0;
@@ -265,7 +281,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 					}
 				} else {
 					// if the robot is already on the floor, it should takeoff first
-					if ( robot.onGround() ) {
+					if ( robot.onGround() && auto_control && destination.z == 0 && distance > 30) {
 						//robot.setFlatTrim();
 						aire_y_estabilizado = false;
 						
@@ -273,7 +289,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 						pitch_set = 0;
 						yaw_set = 0;
 						altitude_set = 0;
-
+						std::cout << "Despegar2"<<std::endl;
 						robot.takeoff();
 						robot.move3D ( 0, 0, altitude_set, yaw_set );
 					}
@@ -288,6 +304,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 					
 					aire_y_estabilizado = false;
 					robot.landing();
+					std::cout << "Aterrizzar"<<std::endl;
 					roll_set = 0;
 					pitch_set = 0;
 					yaw_set = 0;
@@ -314,7 +331,7 @@ extern "C" void run ( tesis::MessageServer* msgServer )
 			quit = msgServer->getBool ( "gui/finish", false );
 		}
 
-		usleep ( 500 ); //0,035 segundos//0,010
+		usleep ( 5000 );//0.033seg     //0,035 segundos//0,010
 	}
 
 	robot.close();
